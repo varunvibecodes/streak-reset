@@ -44,7 +44,7 @@ export default function StreakReset() {
   const [loading, setLoading] = useState(true);
   
   // App State
-  const [appStartDate, setAppStartDate] = useState(getTodayStr()); // Knows when to start drawing rings
+  const [appStartDate, setAppStartDate] = useState(getTodayStr()); 
   
   const [smokeLastReset, setSmokeLastReset] = useState(getTodayStr());
   const [smokeBest, setSmokeBest] = useState(0);
@@ -53,22 +53,45 @@ export default function StreakReset() {
   const [movedLastReset, setMovedLastReset] = useState(getTodayStr());
   const [movedBest, setMovedBest] = useState(0);
   
-  const [slips, setSlips] = useState({ smoke: [], alcohol: [], moved: [] }); // Replaced dailyLogs
-  const [notes, setNotes] = useState({}); // Replaced dailyLogs for journaling
+  const [slips, setSlips] = useState({ smoke: [], alcohol: [], moved: [] }); 
+  const [notes, setNotes] = useState({}); 
   const [cravings, setCravings] = useState([]);
 
   // UI State
   const [currentMonthView, setCurrentMonthView] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
 
-  // 1. Fetch Data
+  // 1. Save Function (Moved UP so it can be used by loadData)
+  const updateStateAndSave = async (key, value) => {
+    const currentUser = auth.currentUser; // Get fresh auth state
+    if (currentUser) {
+      try {
+        await setDoc(doc(db, 'users', currentUser.uid), { [key]: value }, { merge: true });
+      } catch (error) {
+        console.error("Error saving:", error);
+      }
+    }
+    // Local Update
+    if (key === 'appStartDate') setAppStartDate(value);
+    if (key === 'smokeLastReset') setSmokeLastReset(value);
+    if (key === 'smokeBest') setSmokeBest(value);
+    if (key === 'alcoholLastReset') setAlcoholLastReset(value);
+    if (key === 'alcoholBest') setAlcoholBest(value);
+    if (key === 'movedLastReset') setMovedLastReset(value);
+    if (key === 'movedBest') setMovedBest(value);
+    if (key === 'slips') setSlips(value);
+    if (key === 'notes') setNotes(value);
+    if (key === 'cravings') setCravings(value);
+  };
+
+  // 2. Fetch Data
   const loadData = async (uid) => {
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
       if (data.appStartDate) setAppStartDate(data.appStartDate);
-      else updateStateAndSave('appStartDate', getTodayStr()); // Set start date if brand new
+      else updateStateAndSave('appStartDate', getTodayStr()); 
       
       if (data.smokeLastReset) setSmokeLastReset(data.smokeLastReset);
       if (data.smokeBest) setSmokeBest(data.smokeBest);
@@ -86,7 +109,7 @@ export default function StreakReset() {
     }
   };
 
-  // 2. Auth
+  // 3. Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -95,28 +118,6 @@ export default function StreakReset() {
     });
     return () => unsubscribe();
   }, []);
-
-  // 3. Save
-  const updateStateAndSave = async (key, value) => {
-    if (user) {
-      try {
-        await setDoc(doc(db, 'users', user.uid), { [key]: value }, { merge: true });
-      } catch (error) {
-        console.error("Error saving:", error);
-      }
-    }
-    // Local Update
-    if (key === 'appStartDate') setAppStartDate(value);
-    if (key === 'smokeLastReset') setSmokeLastReset(value);
-    if (key === 'smokeBest') setSmokeBest(value);
-    if (key === 'alcoholLastReset') setAlcoholLastReset(value);
-    if (key === 'alcoholBest') setAlcoholBest(value);
-    if (key === 'movedLastReset') setMovedLastReset(value);
-    if (key === 'movedBest') setMovedBest(value);
-    if (key === 'slips') setSlips(value);
-    if (key === 'notes') setNotes(value);
-    if (key === 'cravings') setCravings(value);
-  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-neutral-500">Loading your data...</div>;
 
@@ -199,7 +200,7 @@ export default function StreakReset() {
   const prevMonth = () => setCurrentMonthView(new Date(currentMonthView.getFullYear(), currentMonthView.getMonth() - 1, 1));
   const nextMonth = () => setCurrentMonthView(new Date(currentMonthView.getFullYear(), currentMonthView.getMonth() + 1, 1));
 
-  // --- Updated Apple Fitness Ring Component ---
+  // --- Apple Fitness Ring Component ---
   const DayRing = ({ dateStr }) => {
     if (!dateStr) return <div className="w-10 h-10"></div>; 
     
